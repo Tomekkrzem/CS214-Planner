@@ -220,7 +220,7 @@ class TripPlanner (TRIP_PLANNER):
         
         
         
-    def find_nearby(self,src_lat,src_lon,dst_cat,n):
+    def find_nearby(self,src_lat,src_lon,dst_cat,n):      
         # Starting Position
         let pos = [src_lat,src_lon]
         # Starting Vertex
@@ -239,12 +239,14 @@ class TripPlanner (TRIP_PLANNER):
         for i in range(len(travel_paths)):
             sorted_POIs.insert([travel_paths[i],i])  
     
-        # Initializes Iterator and Current Vertex
+        # Initializes Iterator
         let i = 0
-        let curr_vertex = None
         
         # Loops Until Iterator equals n
         while i < n: 
+            
+            # Initialize Current Vertex
+            let curr_vertex = None
             
             # Makes Sure Priority Queue isn't Empty 
             if sorted_POIs.len() != 0:
@@ -254,21 +256,21 @@ class TripPlanner (TRIP_PLANNER):
                 else:
                     curr_vertex = sorted_POIs.find_min()[1]
                     sorted_POIs.remove_min()
+                                
+                    # Get Current Position    
+                    let curr_pos = self.vertex_to_pos.get(curr_vertex)
+            
+                    # Gets Current POI
+                    let curr = self.dict_of_poi.get(curr_pos) 
+            
+                    # Loops Through Each POI in Position       
+                    while curr != None:
+                        if curr.data[0] == dst_cat and i < n:
+                            i = i + 1
+                            nearby = cons([curr_pos[0],curr_pos[1],curr.data[0],curr.data[1]],nearby)
+                        curr = curr.next 
             else:
                 break
-            
-            # Get Current Position    
-            let curr_pos = self.vertex_to_pos.get(curr_vertex)
-            
-            # Gets Current POI
-            let curr = self.dict_of_poi.get(curr_pos) 
-            
-            # Loops Through Each POI in Position       
-            while curr != None:
-                if curr.data[0] == dst_cat and i < n:
-                    i = i + 1
-                    nearby = cons([curr_pos[0],curr_pos[1],curr.data[0],curr.data[1]],nearby)
-                curr = curr.next 
                                    
         return nearby    
  
@@ -369,6 +371,11 @@ test 'My second locate_all test':
     assert my_second_example().locate_all("bar") == \
         cons([1,3],cons([1,0],cons([0,1],cons([0,0], None))))
         
+test 'My second find_nearby test':
+    assert my_second_example().find_nearby(0,0,"bar",3) == cons([1, 0, 'bar', 'Tavern 2'],cons([0, 1, 'bar', "Reggie's"],cons([0, 0, 'bar', 'Tavern 1'],None)))
+    assert my_second_example().find_nearby(0,0,"bar",1) == cons([0, 0, 'bar', 'Tavern 1'],None)
+    assert my_second_example().find_nearby(0,0,"bar",0) == None
+        
         
 def example_map():
     return TripPlanner([[0,0,1,0],[0,0,0,1],[0,1,1,1],[0,1,0,2],[1,0,1,1],[1,1,1,2],[1,2,0,2],[1,2,1,3],[1,3,-0.2,3.3]],
@@ -446,6 +453,11 @@ def disjoint_map():
                        [[1.5,0,'bank','Union'],
                         [3,0,'barber','Tony'],
                         [5,0,'barber','Judy']])
+                        
+test 'find_nearby disjoint map':
+    assert disjoint_map().find_nearby(0,0, 'barber', 10) == cons([3,0, 'barber', 'Tony'],None)
+    assert disjoint_map().find_nearby(4,0, 'barber', 3) == cons([5,0, 'barber', 'Judy'],None)
+    assert disjoint_map().find_nearby(4,0, 'bank', 4) == None
                            
 test 'plan_route test 1':
     assert disjoint_map().plan_route(0, 0, "Judy") == \
@@ -489,6 +501,7 @@ def tp3():
        
 test '2 relevant POIs; 1 reachable':
     assert tp3().find_nearby(0, 0, 'barber', 2) == cons([3, 0, 'barber', 'Tony'],None)
+    assert tp3().find_nearby(0, 0, 'gym', 30) == None
     
 def tp4():
     return TripPlanner(
@@ -502,4 +515,4 @@ def tp4():
        [5, 0, 'barber', 'Judy']])
 
 test "Relevant POI isn't reachable":
-    assert tp4().find_nearby(0, 0, 'food', 1) == None         
+    assert tp4().find_nearby(0, 0, 'food', 30) == None         
